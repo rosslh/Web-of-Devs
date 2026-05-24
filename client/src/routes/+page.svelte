@@ -9,8 +9,18 @@
   import AddSiteModal from "../components/AddSiteModal.svelte";
   import ReportSiteModal from "../components/ReportSiteModal.svelte";
   import RemoveSiteModal from "../components/RemoveSiteModal.svelte";
+  import type { EntryData } from "../app";
 
   export let data;
+
+  type SortField =
+    | "favorite_count"
+    | "github_num_followers"
+    | "github_num_stars"
+    | "name"
+    | "created_at";
+
+  type SortDirection = "asc" | "desc";
 
   $: entries = data.entries;
   $: programmingLanguages = data.programmingLanguages;
@@ -31,42 +41,88 @@
   let currentShuffledIndex = 0;
 
   const getRandomEntry = async () => {
+    if (shuffledEntries.length === 0) {
+      return;
+    }
+
     selected = shuffledEntries[currentShuffledIndex % shuffledEntries.length];
     currentShuffledIndex += 1;
     await tick();
     document
       .querySelector("[data-selected]")
-      .scrollIntoView({ behavior: "smooth", block: "start", inline: "start" });
+      ?.scrollIntoView({ behavior: "smooth", block: "start", inline: "start" });
   };
 
-  let sortBy = "favorite_count";
-  let sortDirection = "desc" as "asc" | "desc";
+  let sortBy: SortField = "favorite_count";
+  let sortDirection: SortDirection = "desc";
   let selectedLanguage = null;
   let onlyShowMyFavorites = false;
 
-  $: comparingStrings = sortBy === "name";
-  $: sortedEntries = entries
-    .sort((a, b) => {
-      const aValue = comparingStrings ? a[sortBy].toLowerCase() : a[sortBy];
-      const bValue = comparingStrings ? b[sortBy].toLowerCase() : b[sortBy];
+  const getSortValue = (entry: EntryData, field: SortField) => {
+    const value = entry[field];
 
-      // first sort by selected method
-      if (aValue < bValue) {
-        return sortDirection === "desc" ? 1 : -1;
-      } else if (aValue > bValue) {
-        return sortDirection === "desc" ? -1 : 1;
-      } else {
-        // then sort by name and id
-        if (a.name < b.name) {
-          return -1;
-        } else if (a.name > b.name) {
-          return 1;
-        } else {
-          return a.id - b.id;
-        }
-      }
-    })
-    .filter((entry) => !onlyShowMyFavorites || entry.favorited);
+    if (value === null || value === undefined) {
+      return null;
+    }
+
+    return typeof value === "string" ? value.toLocaleLowerCase() : value;
+  };
+
+  const compareByNameAndId = (a: EntryData, b: EntryData) =>
+    a.name.localeCompare(b.name, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    }) || a.id - b.id;
+
+  const compareEntries = (
+    a: EntryData,
+    b: EntryData,
+    field: SortField,
+    direction: SortDirection
+  ) => {
+    const aValue = getSortValue(a, field);
+    const bValue = getSortValue(b, field);
+
+    if (aValue === null && bValue === null) {
+      return compareByNameAndId(a, b);
+    }
+
+    if (aValue === null) {
+      return 1;
+    }
+
+    if (bValue === null) {
+      return -1;
+    }
+
+    const primaryComparison =
+      typeof aValue === "number" && typeof bValue === "number"
+        ? aValue - bValue
+        : String(aValue).localeCompare(String(bValue), undefined, {
+            numeric: true,
+            sensitivity: "base",
+          });
+
+    if (primaryComparison !== 0) {
+      return direction === "desc" ? -primaryComparison : primaryComparison;
+    }
+
+    return compareByNameAndId(a, b);
+  };
+
+  $: sortedEntries = entries
+    .filter((entry) => !onlyShowMyFavorites || entry.favorited)
+    .sort((a, b) => compareEntries(a, b, sortBy, sortDirection));
+
+  const updateEntry = (updatedEntry: EntryData) => {
+    entries = entries.map((entry) =>
+      entry.id === updatedEntry.id ? updatedEntry : entry
+    );
+
+    if (selected?.id === updatedEntry.id) {
+      selected = updatedEntry;
+    }
+  };
 
   const getFilteredEntries = async (filterByLanguage: number) => {
     if (filterByLanguage) {
@@ -173,6 +229,7 @@
       {authenticated}
       {sortBy}
       {user_id}
+      {updateEntry}
     />
     {#if authenticated && can_submit_website}
       <AddSiteButton bind:showAddSiteModal />

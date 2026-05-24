@@ -10,6 +10,7 @@
   export let showStars: boolean;
   export let showReportSiteModalForEntry: number;
   export let showRemoveSiteModal: boolean;
+  export let updateEntry: (entry: EntryData) => void = () => {};
 
   import ThumbsUpIcon from "~icons/fa/thumbs-up";
   import ThumbsDownIcon from "~icons/fa/thumbs-down";
@@ -21,8 +22,15 @@
   import RemoveIcon from "~icons/octicon/trash-16";
   import ReportIcon from "~icons/ci/flag-fill";
 
+  const applyEntryUpdate = (changes: Partial<EntryData>) => {
+    const updatedEntry = { ...entry, ...changes };
+    entry = updatedEntry;
+    updateEntry(updatedEntry);
+    return updatedEntry;
+  };
+
   async function review(status: string) {
-    entry.status = status;
+    applyEntryUpdate({ status });
     await fetch(`/api/reviews/${entry.id}`, {
       method: "PUT",
       headers: {
@@ -41,8 +49,10 @@
   };
 
   const favorite = async () => {
-    entry.favorited = true;
-    entry.favorite_count += 1;
+    applyEntryUpdate({
+      favorited: true,
+      favorite_count: entry.favorite_count + 1,
+    });
     await fetch(`/api/favorites`, {
       method: "POST",
       headers: {
@@ -53,20 +63,22 @@
   };
 
   const unfavorite = async () => {
-    entry.favorited = false;
-    entry.favorite_count -= 1;
+    applyEntryUpdate({
+      favorited: false,
+      favorite_count: Math.max(0, entry.favorite_count - 1),
+    });
     await fetch(`/api/favorites/${entry.id}`, {
       method: "DELETE",
     });
   };
 
-  const domainName = entry.website_url
+  $: domainName = entry.website_url
     .replace(/^https?:\/\//, "")
     .replace(/\/$/, "");
 
   const setSelected = () => {
-    entry.reloadKey = !entry.reloadKey;
-    selected = entry;
+    const updatedEntry = applyEntryUpdate({ reloadKey: !entry.reloadKey });
+    selected = updatedEntry;
   };
 </script>
 

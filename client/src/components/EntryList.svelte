@@ -7,6 +7,7 @@
   export let is_admin: boolean;
   export let authenticated: boolean;
   export let sortBy: string;
+  export let updateEntry: (entry: EntryData) => void;
 
   export let showReportSiteModalForEntry: number;
   export let showRemoveSiteModal: boolean;
@@ -16,7 +17,8 @@
 <div class="overflow-y-auto h-full md:overflow-y-hidden md:overflow-x-scroll md:h-12 md:flex md:flex-row">
   {#each sortedEntries as entry (entry.id)}
     <Entry
-      bind:entry={entry}
+      {entry}
+      {updateEntry}
       bind:selected={selected}
       bind:showReportSiteModalForEntry={showReportSiteModalForEntry}
       bind:showRemoveSiteModal={showRemoveSiteModal}
