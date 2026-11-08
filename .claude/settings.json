@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(~/.zshenv)",
+      "Read(~/.zshrc)",
+      "Read(~/.zprofile)",
+      "Read(~/.bash_profile)",
+      "Read(~/.bashrc)",
+      "Read(~/.profile)",
+      "Read(~/.netrc)",
+      "Read(~/.npmrc)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/**)",
+      "Read(~/.docker/**)",
+      "Read(~/.kube/**)",
+      "Read(~/.gnupg/**)",
+      "Read(~/.mapledeploy/**)",
+      "Read(~/secrets/**)",
+      "Read(~/Library/**)",
+      "Read(~/Projects/**/.env)",
+      "Read(~/Projects/**/.env.*)",
+      "Read(./.claude/skills/review-submissions/config.json)"
+    ]
+  }
+}

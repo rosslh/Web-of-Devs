@@ -49,3 +49,9 @@ package
 !.env.template
 
 database-backup
+
+# /review-submissions local state: the decision log names people and why their site was declined
+.claude/skills/review-submissions/review-log.md
+.claude/skills/review-submissions/reviewed-urls.json
+.claude/skills/review-submissions/config.json
+.claude/settings.local.json

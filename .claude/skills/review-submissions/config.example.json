@@ -1,0 +1,4 @@
+{
+  "sshHost": "user@host that runs the production Postgres container (key-based SSH, passwordless sudo docker)",
+  "dbContainer": "container name of the production Postgres (a standalone Coolify database is named after its UUID)"
+}
