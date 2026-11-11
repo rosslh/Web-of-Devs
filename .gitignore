@@ -55,3 +55,4 @@ database-backup
 .claude/skills/review-submissions/reviewed-urls.json
 .claude/skills/review-submissions/config.json
 .claude/settings.local.json
+.claude/skills/db/write-log.md
