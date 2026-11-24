@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { onMount, tick } from "svelte";
   import type { EntryData } from "../app";
+  import { getVisitorCountryCode } from "$lib/visitorCountry";
   import ReloadIcon from "~icons/ooui/reload";
   import ExternalLinkIcon from "~icons/octicon/link-external-16";
 
@@ -11,6 +13,35 @@
   };
 
   $: url = selected ? selected.website_url.replace(/\/$/, '') : "";
+
+  const githubButtonScriptSrc = "https://buttons.github.io/buttons.js";
+  const mapleDeployUrl = (utmContent: string) =>
+    `https://mapledeploy.ca/?utm_source=badge&utm_medium=referral&utm_campaign=server-f1b4d852&utm_content=${utmContent}`;
+
+  // Nothing renders in the empty state until the country lookup settles, so
+  // Canadian visitors never see the GitHub prompt flash first.
+  let emptyState: "pending" | "canada" | "default" = "pending";
+
+  function loadGithubButtonScript() {
+    if (document.querySelector(`script[src="${githubButtonScriptSrc}"]`)) return;
+
+    const script = document.createElement("script");
+    script.src = githubButtonScriptSrc;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+
+  onMount(async () => {
+    const countryCode = await getVisitorCountryCode();
+    emptyState = countryCode === "CA" ? "canada" : "default";
+
+    if (emptyState === "default") {
+      // buttons.js renders the .github-button elements present when it loads.
+      await tick();
+      loadGithubButtonScript();
+    }
+  });
 </script>
 <div class="w-full h-full flex flex-col p-1 bg-slate-50 md:w-full md:h-full md:z-30">
   {#if selected}
@@ -38,7 +69,33 @@
         sandbox="allow-forms allow-modals allow-popups allow-scripts allow-same-origin allow-downloads"
       ></iframe>
     {/key}
-  {:else}
+  {:else if emptyState === "canada"}
+    <div class="flex flex-grow flex-col items-center justify-center text-center px-6 -mt-8">
+      <div class="max-w-md flex flex-col items-center">
+        <h2 class="text-3xl font-bold mb-6 leading-tight pb-1">
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400">
+            Host your next project in Canada
+          </span>
+        </h2>
+        <p class="text-slate-500 mb-8 leading-relaxed max-w-xs">
+          Web of Devs runs on <a
+            class="gradient-link"
+            href={mapleDeployUrl("text-link")}
+            target="_blank"
+            rel="noopener">MapleDeploy</a>: managed Coolify hosting on servers in Toronto.
+          Git push deploys and managed databases, with your data kept in Canada.
+        </p>
+        <a class="inline-block leading-none" href={mapleDeployUrl("html-light-large")} target="_blank" rel="noopener">
+          <img
+            class="block"
+            src="https://mapledeploy.ca/api/badge?theme=light&size=large"
+            srcset="https://mapledeploy.ca/api/badge?theme=light&size=large&scale=2 2x"
+            alt="Hosted in Canada with MapleDeploy"
+          />
+        </a>
+      </div>
+    </div>
+  {:else if emptyState === "default"}
     <div class="flex flex-grow flex-col items-center justify-center text-center px-6 -mt-8">
       <div class="max-w-md flex flex-col items-center">
         <h2 class="text-3xl font-bold mb-6 leading-tight pb-1">
